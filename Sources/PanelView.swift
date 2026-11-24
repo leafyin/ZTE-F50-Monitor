@@ -165,11 +165,6 @@ struct PanelView: View {
                 Text("\(engine.snapshot?.stations.count ?? 0)")
                     .font(.system(size: 10.5, weight: .semibold))
                 Spacer()
-                if !engine.localIP.isEmpty {
-                    Text("本机 \(engine.localIP)")
-                        .font(.system(size: 9.5, design: .monospaced))
-                        .foregroundStyle(.tertiary)
-                }
             }
 
             if let stations = engine.snapshot?.stations, !stations.isEmpty {
@@ -182,9 +177,15 @@ struct PanelView: View {
                             .font(.system(size: 10.5))
                             .lineLimit(1)
                         Spacer()
-                        Text(station.ip)
+                        if engine.localIP == station.ip {
+                            Text("本机 \(station.ip)")
                             .font(.system(size: 9.5, design: .monospaced))
                             .foregroundStyle(.secondary)
+                        } else {
+                            Text(station.ip)
+                                .font(.system(size: 9.5, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                        }
                     }
                 }
             } else {

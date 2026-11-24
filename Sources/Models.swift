@@ -47,14 +47,26 @@ struct RouterSnapshot {
 
 enum Fmt {
 
-    /// 菜单栏用的紧凑速率：1.2M / 340K / 12B
+    /// 菜单栏用的紧凑速率：固定 4 字符宽度（含单位），避免进位时跳动
     static func compactRate(_ bps: Double) -> String {
-        if bps < 1000 { return String(format: "%.0fB", bps) }
-        let kb = bps / 1000
-        if kb < 1000 { return String(format: "%.0fK", kb) }
-        let mb = kb / 1000
-        if mb < 10 { return String(format: "%.1fM", mb) }
-        return String(format: "%.0fM", mb)
+        let text: String
+        if bps < 1000 {
+            text = String(format: "%.0fB", bps)
+        } else {
+            let kb = bps / 1000
+            if kb < 1000 {
+                text = String(format: "%.0fK", kb)
+            } else {
+                let mb = kb / 1000
+                if mb < 10 {
+                    text = String(format: "%.1fM", mb)
+                } else {
+                    text = String(format: "%.0fM", min(mb, 999))
+                }
+            }
+        }
+        if text.count >= 4 { return String(text.prefix(4)) }
+        return String(repeating: " ", count: 4 - text.count) + text
     }
 
     static func bytes(_ value: Int64) -> String {

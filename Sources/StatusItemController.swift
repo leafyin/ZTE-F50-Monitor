@@ -185,14 +185,19 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         var rowWidth: CGFloat = 0
         var indent: CGFloat = 0
         if showRate && !offline {
-            row1.append(seg("↓", colors.down, arrowFont))
+            let downArrow = seg("↓", colors.down, arrowFont)
+            let upArrow = seg("↑", colors.up, arrowFont)
+            row1.append(downArrow)
             row1.append(seg(Fmt.compactRate(engine.downBps), colors.down, rowFont))
-            row2.append(seg("↑", colors.up, arrowFont))
+            row2.append(upArrow)
             row2.append(seg(Fmt.compactRate(engine.upBps), colors.up, rowFont))
-            rowWidth = max(row1.size().width, row2.size().width)
+            // 固定按 4 字符速率预留宽度，避免数值变化时菜单栏宽度跳动
+            let template = NSMutableAttributedString()
+            template.append(downArrow)
+            template.append(seg("999M", colors.down, rowFont))
+            rowWidth = template.size().width
             // 让两行的速率数字对齐：第二行按箭头宽度微调
-            indent = seg("↓", colors.down, arrowFont).size().width
-                - seg("↑", colors.up, arrowFont).size().width
+            indent = downArrow.size().width - upArrow.size().width
         }
 
         let leftPad: CGFloat = 2
