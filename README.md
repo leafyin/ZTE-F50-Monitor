@@ -1,7 +1,8 @@
 # F50 Monitor
 
 macOS 菜单栏小工具，用来实时看**中兴 F50（MU5120）随身 Wi-Fi**的信号、速率、流量和在线设备。
-
+<img width="77" height="24" alt="image" src="https://github.com/user-attachments/assets/8a82b15c-81aa-4e74-9ed9-ad50d1a964f4" />
+<img width="339" height="290" alt="image" src="https://github.com/user-attachments/assets/93219de0-f0cf-4492-8cd0-33f634389bad" />
 形态：菜单栏常驻一个条目（`5G` 大字 + 上下两行 `↓下行` / `↑上行`），点击展开面板。
 
 ## 功能
