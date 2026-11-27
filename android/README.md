@@ -1,30 +1,36 @@
 # F50 监控 · Android 端
 
-对应方案：`/Users/yinye/DoubaoWork/chats/2026-11-26/new-chat-1/F50 Android 端实施方案.md`
-交互原型：`/Users/yinye/DoubaoWork/chats/2026-11-26/new-chat-1/F50 Android 原型.html`
+F50 随身路由（中兴 F50）的 Android 客户端：前台服务定时抓取路由器状态，展示速率、剩余流量、在线设备，并提供桌面小组件与常驻通知。跟随系统深浅色。
 
-## 当前状态（2026-11-27 凌晨）
+## 截图
 
-**代码已完成 M1–M4，`assembleDebug` 构建通过，APK 已产出并成功安装到模拟器；卡在模拟器太慢导致应用进程启动超时，未完成真机/模拟器运行验证。**
+| 浅色 | 深色 |
+| --- | --- |
+| ![](screenshots/panel-light.jpg) | ![](screenshots/panel-dark.jpg) |
+
+3×1 桌面小组件（浅 / 深）：
+
+| 浅色 | 深色 |
+| --- | --- |
+| ![](screenshots/widget-light.jpg) | ![](screenshots/widget-dark.jpg) |
+
+## 当前状态（2026-11-27）
+
+**已在魅族 21 Pro（Android 16 / SDK 36）上跑通全部功能，真机完成流量口径标定，release 包已签名产出。**
 
 已完成：
 
-- M1 算法库：`UsageCalculator`（双源择优、计数器冻结估算、dt 过大跳过积分）、`QuotaRepository`（校准口径、基准迁移、日用量 90 天）
-- M2 采集：`RouterApi`（HttpURLConnection + Referer，字段解析容错）、`NetworkUtil`（Wi-Fi 网络选择与网关发现、`bindProcessToNetwork`）、`MonitorService`（`connectedDevice` 前台服务、通知、开机自启）
-- M3 面板：Compose 面板（状态卡 / 实时速率 / 折线 / 套餐进度 / 在线设备 / 设置 / 校准弹窗）
-- M4 小组件：`RateWidgetProvider`（服务主动 push，`updatePeriodMillis=0`）
+- M1 算法库：`UsageCalculator`（固件下行瞬时积分，计数器差分仅作诊断）、`QuotaRepository`（校准口径、基准迁移、日用量 90 天）
+- M2 采集：`RouterApi`（HttpURLConnection + Referer，字段解析容错）、`NetworkUtil`（Wi-Fi 网络选择与网关发现、`bindProcessToNetwork`）、`MonitorService`（`connectedDevice` 前台服务 + 常驻通知）
+- M3 面板：Compose 面板（状态卡 / 实时速率折线 / 套餐进度 / 在线设备 / 设置 / 校准弹窗），`Theme.kt` 双套配色跟随系统
+- M4 小组件：`RateWidgetProvider`（服务主动 push，`updatePeriodMillis=0`），`values-night` 深色配色
 - 构建：AGP 8.6.1 + Kotlin 2.0.20 + Compose BOM 2024.09.02，`compileSdk 35 / minSdk 26 / targetSdk 35`
 
-待办（明天从第 1 条开始）：
+已知限制：
 
-1. **让应用真正跑起来看到界面**：模拟器（AVD `dd_test`，API 35）在本机只能软件模拟（`HVF` 初始化失败：`failed to initialize HVF`），开机后系统负载高，应用进程 attach 超过 10s 被 `ActivityManager` 杀掉（日志 `Start proc ... failed to attach` / `start timeout`）。可选方案：
-   - 用 USB 真机（推荐，也是 M0 需要验证 Wi-Fi 绑定、Doze、OEM 保活的地方）
-   - 或换一个更轻的 AVD（低分辨率、无 GMS 镜像），并等开机后 1–2 分钟再启动
-   - 或装 Android Studio 用它的设备管理器（其自带加速配置）
-2. **M0 标定**：Mac 上实测 `realtime_rx_thrpt` 会跳到 2.3 MB/s 而计数器只 +0.2 MB/s，且 `monthly_tx_bytes` 完全不动。需要在真机上重测「固件瞬时 vs 计数器差分」的比例、以及 tx 冻结时的套餐口径（现有算法默认只采信下行）。
-3. 校准流程实测：首次进入未校准，需按运营商 App 填一次总量+剩余，之后剩余会随计数器变化。
-4. 生成 `gradlew` wrapper（当前用本地 `~/.local/gradle-8.9/bin/gradle` 构建，仓库里还没有 wrapper）。
-5. 桌面小组件真机验证（模拟器桌面可加，但刷新依赖前台服务存活）。
+- **Flyme 会把整进程冻结**（日志 `am_freeze`），面板/小组件/通知一起定格，冻结期间用量漏记；退出后台后需手动重进应用恢复。
+- 开机自启在 Flyme 上实测无效（`BOOT_COMPLETED` 未拉起服务），`BootReceiver` 代码保留但不保证生效。
+- `adb install` 若报 `INSTALL_FAILED_USER_RESTRICTED`，点亮并解锁屏幕重试即可。
 
 ## 构建 / 安装
 
@@ -50,13 +56,13 @@ $ANDROID_HOME/platform-tools/adb shell am start -n com.leafyin.f50monitor/.ui.Ma
 ## 目录
 
 ```
-F50Android/
+android/
 ├── app/src/main/java/com/leafyin/f50monitor/
 │   ├── data/        Models.kt · RouterApi.kt · NetworkUtil.kt
 │   ├── domain/      UsageCalculator.kt · QuotaRepository.kt · Fmt.kt
 │   ├── service/     MonitorService.kt · MonitorState.kt · BootReceiver.kt
 │   ├── widget/      RateWidgetProvider.kt
-│   └── ui/          MainActivity.kt · PanelScreen.kt · CalibrationDialog.kt
+│   └── ui/          MainActivity.kt · PanelScreen.kt · CalibrationDialog.kt · Theme.kt
 ├── app/src/main/res/  layout/widget_rate.xml · xml/(network_security_config|widget_info).xml · drawable/*
 └── app/build.gradle.kts
 ```
@@ -133,5 +139,5 @@ GitHub：仓库已初始化并打 tag `v0.1.0`，Release 附件用 `f50-monitor-
 
 ## 下一步
 
-- 用运营商 App 的真实剩余做一次正式校准（当前基准是测试时填的 160GB / 剩余 120GB）
 - 上传场景实测一次，决定 tx 是否需要单独系数
+- 是否把 macOS 端的用量口径也切到「固件下行瞬时积分」，与手机端统一

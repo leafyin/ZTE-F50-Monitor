@@ -65,6 +65,16 @@ Referer: http://192.168.0.1/index.html
 - 前台服务（`connectedDevice` 类型），可暂停/恢复；网关自动取当前 Wi-Fi 网关，也可手填
 - 用量口径：**固件下行瞬时积分**为主（见下方「口径差异」），`monthly` 计数器差分只作诊断
 
+截图（浅色 / 深色跟随系统）：
+
+| 浅色 | 深色 |
+| --- | --- |
+| ![](android/screenshots/panel-light.jpg) | ![](android/screenshots/panel-dark.jpg) |
+
+| 浅色（3×1 小组件） | 深色（3×1 小组件） |
+| --- | --- |
+| ![](android/screenshots/widget-light.jpg) | ![](android/screenshots/widget-dark.jpg) |
+
 构建：
 
 ```bash
