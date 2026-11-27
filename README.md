@@ -1,6 +1,9 @@
 # F50 Monitor
 
-macOS 菜单栏小工具，用来实时看**中兴 F50（MU5120）随身 Wi-Fi**的信号、速率、流量和在线设备。
+macOS 菜单栏小工具 + Android 客户端，用来实时看**中兴 F50（MU5120）随身 Wi-Fi**的信号、速率、流量和在线设备。
+
+- macOS 版：Swift/AppKit，代码在 `Sources/`
+- Android 版：Kotlin + Compose，代码在 `android/`（已在魅族 21 Pro / Android 16 真机验证）
 <img width="77" height="24" alt="image" src="https://github.com/user-attachments/assets/8a82b15c-81aa-4e74-9ed9-ad50d1a964f4" />
 <img width="339" height="290" alt="image" src="https://github.com/user-attachments/assets/93219de0-f0cf-4492-8cd0-33f634389bad" />
 形态：菜单栏常驻一个条目（`5G` 大字 + 上下两行 `↓下行` / `↑上行`），点击展开面板。
@@ -53,6 +56,34 @@ Referer: http://192.168.0.1/index.html
 
 另外 `realtime_rx_bytes` / `realtime_tx_bytes` 恒为 0，`realtime_time` 是倒计时，都不能当累计量用。
 
+## Android 客户端
+
+`android/` 是独立的 Gradle 工程，包名 `com.leafyin.f50monitor`，minSdk 26 / target 35。
+
+- 面板：5G/运营商/信号/RSRP/接口响应、实时上下行 + 60 点折线、剩余/已用/今日、在线设备、本机 IP
+- 常驻通知 + 3×1 桌面小组件，深浅色跟随系统
+- 前台服务（`connectedDevice` 类型），可暂停/恢复；网关自动取当前 Wi-Fi 网关，也可手填
+- 用量口径：**固件下行瞬时积分**为主（见下方「口径差异」），`monthly` 计数器差分只作诊断
+
+构建：
+
+```bash
+cd android
+JAVA_HOME=$HOME/.local/jdk17 ANDROID_HOME=$HOME/Library/Android/sdk ./gradlew :app:assembleDebug
+# 发布包：./gradlew :app:assembleRelease（签名读 android/keystore.properties，不入库）
+```
+
+细节、真机验证记录和标定数据见 [`android/README.md`](android/README.md)。
+
+### 口径差异（2026-11-27 实测）
+
+macOS 版把 `monthly_rx_bytes` 计数器差分当精确值、`realtime_rx_thrpt` 当 1:1 参考。手机端复测这台 MU5120 时结论相反：
+
+- 下载 136MB，计数器六分钟内只涨 11MB 且不补记；空载时反而以 30–100KB/s 匀速漂移
+- `realtime_rx_thrpt` 积分与实际流量吻合（高速段 0.93x，单次 10MB 在 0.6–0.9x）
+
+所以 Android 版改用固件积分记账，并在面板上并排显示「固件积分账 / 路由器计数」方便对账。macOS 版目前仍沿用原口径，两端口径是否统一待定。
+
 ## 构建
 
 无第三方依赖，只需命令行工具（`xcode-select --install`）：
@@ -73,6 +104,7 @@ open build/F50Monitor.app
 
 ```
 F50Monitor/
+├── android/               Android 工程（Kotlin + Compose）
 ├── Sources/
 │   ├── F50MonitorApp.swift          # 入口（纯 AppKit 生命周期，不声明 SwiftUI 场景）
 │   ├── StatusItemController.swift   # 菜单栏项（NSStatusItem + 自绘位图，两行两色）

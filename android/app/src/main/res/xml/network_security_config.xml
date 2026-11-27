@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  只允许对局域网网关的明文 HTTP。
+  F50 的管理页是 http://192.168.0.1/goform/...，无法改成 https。
+  这里放开明文，但 App 代码只会请求网关地址（见 RouterApi / NetworkUtil）。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
